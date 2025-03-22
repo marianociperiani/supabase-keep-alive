@@ -47,7 +47,7 @@ jobs:
             try {
               // Simple query that doesn't create heavy load
               const { data, error } = await supabase
-                .from('your_table_name')  // Replace with any table in your database
+                .from('costos')  // Replace with any table in your database
                 .select('count')
                 .limit(1);
                 
