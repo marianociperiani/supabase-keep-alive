@@ -12,6 +12,9 @@ jobs:
       - name: Mostrar fecha actual
         run: date
 
+      - name: Verificar URL construida
+        run: echo "${{ secrets.SUPABASE_URL }}/rest/v1/"
+
       - name: Ping Supabase
         run: |
           echo "Haciendo ping a Supabase..."
