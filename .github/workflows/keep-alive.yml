@@ -1,34 +1,67 @@
-name: Keep Supabase Awake (Daily)
+# File: .github/workflows/supabase-keepalive.yml
+
+name: Supabase Database Keepalive
 
 on:
   schedule:
-    - cron: "0 6 * * *"  # Todos los días a las 6:00 UTC
+    # Run every 6 hours (4 times per day)
+    # Adjust timing as needed (format: minute hour * * day-of-week)
+    # This runs at 00:00, 06:00, 12:00, and 18:00 UTC
+    - cron: '0 */6 * * *'
+  
+  # Manual trigger option for testing
   workflow_dispatch:
 
 jobs:
-  ping:
+  ping-database:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Verificar fecha
-        run: date
-
-      - name: Mostrar URL construida
-        run: echo "${{ secrets.SUPABASE_URL }}/rest/v1/"
-
-      - name: Validar que SUPABASE_URL no esté vacío
-        run: |
-          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
-            echo "❌ SUPABASE_URL está vacío"
-            exit 1
-          else
-            echo "✅ SUPABASE_URL está presente"
-          fi
-
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+      
       - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          echo "Haciendo ping a Supabase..."
-          curl -v "${{ secrets.SUPABASE_URL }}/rest/v1/" \
-            -H "apikey: ${{ secrets.SUPABASE_API_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_API_KEY }}"
-          echo "✅ Ping completado correctamente"
-
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          
+          async function pingDatabase() {
+            const supabase = createClient(
+              process.env.SUPABASE_URL,
+              process.env.SUPABASE_KEY
+            );
+            
+            console.log('Pinging Supabase database at: ' + new Date().toISOString());
+            
+            try {
+              // Simple query that doesn't create heavy load
+              const { data, error } = await supabase
+                .from('your_table_name')  // Replace with any table in your database
+                .select('count')
+                .limit(1);
+                
+              if (error) {
+                console.error('Error pinging database:', error.message);
+                process.exit(1);
+              }
+              
+              console.log('Ping successful!');
+            } catch (err) {
+              console.error('Unexpected error:', err.message);
+              process.exit(1);
+            }
+          }
+          
+          pingDatabase();
+          "
