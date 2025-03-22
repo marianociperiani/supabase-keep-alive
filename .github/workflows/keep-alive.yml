@@ -2,23 +2,32 @@ name: Keep Supabase Awake (Daily)
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 6 * * *"  # Todos los días a las 6:00 UTC
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Mostrar fecha actual
+      - name: Verificar fecha
         run: date
 
-      - name: Verificar URL construida
+      - name: Mostrar URL construida
         run: echo "${{ secrets.SUPABASE_URL }}/rest/v1/"
+
+      - name: Validar que SUPABASE_URL no esté vacío
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "❌ SUPABASE_URL está vacío"
+            exit 1
+          else
+            echo "✅ SUPABASE_URL está presente"
+          fi
 
       - name: Ping Supabase
         run: |
           echo "Haciendo ping a Supabase..."
-          curl -s "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+          curl -v "${{ secrets.SUPABASE_URL }}/rest/v1/" \
             -H "apikey: ${{ secrets.SUPABASE_API_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_API_KEY }}"
           echo "✅ Ping completado correctamente"
