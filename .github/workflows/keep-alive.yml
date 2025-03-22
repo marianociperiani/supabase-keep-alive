@@ -2,16 +2,21 @@ name: Keep Supabase Awake (Daily)
 
 on:
   schedule:
-    - cron: "0 6 * * *"  # Ejecuta todos los días a las 6:00 UTC
-  workflow_dispatch:      # También podés ejecutarlo manualmente
+    - cron: "0 6 * * *"
+  workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase to prevent pause
+      - name: Mostrar fecha actual
+        run: date
+
+      - name: Ping Supabase
         run: |
+          echo "Haciendo ping a Supabase..."
           curl -s "${{ secrets.SUPABASE_URL }}/rest/v1/" \
             -H "apikey: ${{ secrets.SUPABASE_API_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_API_KEY }}"
+          echo "✅ Ping completado correctamente"
 
